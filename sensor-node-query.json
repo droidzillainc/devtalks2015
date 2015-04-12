@@ -1,0 +1,6 @@
+{
+  "name": ".*sensornode",
+  "type": {
+    "name": "mqtt"
+  }
+}
