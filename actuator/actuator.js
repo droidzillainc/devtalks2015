@@ -1,13 +1,24 @@
 var iotkit = require('iotkit-comm');
 var path = require('path');
 
-var query = new iotkit.ServiceQuery(path.join(__dirname, "server-query.json"));
-iotkit.createClient(query, function (client) {
-  client.comm.setReceivedMessageHandler(function (message, context) {
-    console.log("received from server: " + message.toString());
-//    client.comm.send("hello");
+var name = process.argv[2];
+if (name == undefined){
+    name = "temperature-in";
+}
+
+var updateTime = process.argv[3];
+if (updateTime == undefined) {
+    updateTime = 5000;
+}
+
+console.log("using:"+name+ " updateTime:"+ updateTime);
+
+var spec = new iotkit.ServiceSpec({"name":"/senzoriada/"+name+"/actuator", "type":{"name":"zmqreqrep"}});
+
+iotkit.createService(spec, function (service) {
+  service.comm.setReceivedMessageHandler(function(msg, context, client) {
+    console.log("received from client: " + msg.toString());
+    service.comm.send("hi "+ name);
   });
-  setInterval(function() {
-    client.comm.send("online 1");
-  }, 7000);
 });
+
