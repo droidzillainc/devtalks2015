@@ -8,6 +8,6 @@ iotkit.createClient(query, function (client) {
 //    client.comm.send("hello");
   });
   setInterval(function() {
-    client.comm.send("online");
-  }, 5000);
+    client.comm.send("online 1");
+  }, 7000);
 });

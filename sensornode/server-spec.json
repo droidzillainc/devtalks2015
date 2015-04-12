@@ -1,6 +1,0 @@
-{
-  "name": "/senzoriada/temperature-out/sensornode",
-  "type": {
-  "name": "mqtt"
-  }
-}
