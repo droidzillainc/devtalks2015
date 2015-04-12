@@ -1,7 +1,0 @@
-{
-  "name": ".*actuator",
-  "type": {
-    "name": "zmqreqrep"
-  },
-  "properties": {"replymsg": "hi"}
-}
