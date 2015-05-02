@@ -56,7 +56,6 @@ iotkit.createClient(query, function (actuator) {
   actuators.add(actuator.spec.name, actuator);
   actuator.comm.setReceivedMessageHandler(function (message, context) {
     console.log("received from actuator: " + message.toString());
-//    client.comm.send("hello");
   });
   actuator.comm.send(JSON.stringify({"state":"off"}));
 });
