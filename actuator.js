@@ -1,5 +1,8 @@
 var iotkit = require('iotkit-comm');
 var path = require('path');
+var grove = require('jsupm_grove');
+
+var led = new grove.GroveLed(5);
 
 var name = process.argv[2];
 if (name == undefined){
@@ -17,8 +20,14 @@ var spec = new iotkit.ServiceSpec({"name":"/senzoriada/"+name+"/actuator", "type
 
 iotkit.createService(spec, function (service) {
   service.comm.setReceivedMessageHandler(function(msg, context, client) {
-    console.log("received from client: " + msg.toString());
-//    console.log(client);
+    var command = JSON.parse(msg.toString());
+    var value = command["state"];
+    if (value == 1) {
+	led.on();
+    }
+    else {
+	led.off();
+    }
     service.comm.send("hi "+ name);
   });
 });
