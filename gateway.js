@@ -4,16 +4,16 @@ var mqtt    = require('mqtt');
 
 var MQTT_ADDRESS = 'tcp://iot.eclipse.org';
 var mqttClient  = mqtt.connect(MQTT_ADDRESS);
- 
+var MQTT_ACTUATOR_CONFIG_CHANNEL = "/senzoriada/devtalksdemo/actuator/config";
+var MQTT_SENSOR_PUBLISH_CHANNEL = "/senzoriada/devtalksdemo/sensors";
+var MQTT_ACTUATOR_PUBLISH_CHANNEL = "/senzoriada/devtalksdemo/actuators/state"
+
 mqttClient.on('connect', function () {
   console.log("Connected to:"+ MQTT_ADDRESS);
-  mqttClient.subscribe('rubix/test/senzoriada-in');
-//  mqttClient.publish('rubix/test', 'Hello mqtt 2');
+  mqttClient.subscribe(MQTT_ACTUATOR_PUBLISH_CHANNEL);
 });
  
 mqttClient.on('message', function (topic, message) {
-  // message is Buffer 
-  console.log("Aici", message);
   var command = JSON.parse(message.toString());
   updateActuator(command);
 });
@@ -24,9 +24,9 @@ var sensorNodes = {};
 var query = new iotkit.ServiceQuery(path.join(__dirname, "sensor-node-query.json"));
 iotkit.createClient(query, function (sensorNode) {
   sensorNode.comm.setReceivedMessageHandler(function (message, context) {
-    sensorNodes[sensorNode.spec.name] = message;
-    console.log("received from "+sensorNode.spec.name+" " + message.toString());
-    mqttClient.publish("rubix/test/senzoriada", JSON.stringify(getSensorNodesPayload()));
+    sensorNodes[sensorNode.spec.name] = JSON.parse(message);
+    console.log("received from "+sensorNode.spec.name+" " + message);
+    mqttClient.publish(MQTT_SENSOR_PUBLISH_CHANNEL, JSON.stringify(getSensorNodesPayload()), {qos:2, retain:true});
   });
 });
 
@@ -42,18 +42,27 @@ var getSensorNodesPayload = function() {
 
 
 var actuators = {
-    length: 0,
     add: function(k, v) {
-        if (typeof this[k] === 'undefined') {
-            this.length++;
-        }
-        this[k] = v;
+        this[k] = v; 
+    }
+};
+
+var actuatorSpecs = {
+    add: function(k, v) {
+        this[k] = v; 
     }
 };
 
 var query = new iotkit.ServiceQuery(path.join(__dirname, "actuator-query.json"));
 iotkit.createClient(query, function (actuator) {
   actuators.add(actuator.spec.name, actuator);
+  actuatorSpecs.add(actuator.spec.name, actuator.spec.properties);
+  console.log("______________________");
+  console.log(actuator.comm);
+  console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+  console.log(actuatorSpecs);
+  
+  mqttClient.publish(MQTT_ACTUATOR_CONFIG_CHANNEL, JSON.stringify(actuatorSpecs),{qos:2, retain:true});
   actuator.comm.setReceivedMessageHandler(function (message, context) {
     console.log("received from actuator: " + message.toString());
   });
@@ -64,7 +73,8 @@ var updateActuator = function(command) {
     var actuatorName = Object.keys(command)[0];
     var actuator = actuators[actuatorName];
     if (actuator !== undefined) {
-        console.log("Sending");
+	console.log("______________________________________________________");
+        console.log(actuator.comm);
         actuator.comm.send(JSON.stringify({"state":command[actuatorName]}));
     }
     else {
